@@ -1,11 +1,14 @@
-import './App.css';
-import TodoList from "./component/TodoList"
+import "./App.css";
+import TodoList from "./component/TodoList";
+import { ThemeProvider } from "./ThemeContext";
 
 function App() {
   return (
-    <div className="App">
-      <TodoList />
-    </div>
+    <ThemeProvider>
+      <div className="App">
+        <TodoList />
+      </div>
+    </ThemeProvider>
   );
 }
 
