@@ -56,13 +56,13 @@ class TodoList extends Component {
   };
 
   toggleTodo = (id) => {
-    const todoIndex = this.state.todos.findIndex(todo => todo.id === id);
+    const todoIndex = this.state.todos.findIndex((todo) => todo.id === id);
     if (todoIndex === -1) return;
 
     this.setState((prevState) => ({
-      todos: prevState.todos.map(todo => 
+      todos: prevState.todos.map((todo) =>
         todo.id === id ? { ...todo, completed: !todo.completed } : todo
-      )
+      ),
     }));
   };
 
@@ -78,11 +78,11 @@ class TodoList extends Component {
       todos: prevState.todos.filter((todo) => todo.id !== id),
       currentPage:
         Math.ceil((prevState.todos.length - 1) / prevState.todosPerPage) <
-        prevState.currentPage
+          prevState.currentPage
           ? Math.max(
-              1,
-              Math.ceil((prevState.todos.length - 1) / prevState.todosPerPage)
-            )
+            1,
+            Math.ceil((prevState.todos.length - 1) / prevState.todosPerPage)
+          )
           : prevState.currentPage,
     }));
   };
@@ -122,6 +122,16 @@ class TodoList extends Component {
   paginate = (pageNumber) => {
     this.setState({ currentPage: pageNumber });
   };
+
+  updateTodoText = (id, newText) => {
+    if (!newText.trim()) return;
+
+    this.setState((prevState) => ({
+      todos: prevState.todos.map((todo) =>
+        todo.id === id ? { ...todo, text: newText } : todo
+      ),
+    }));
+  };
   render() {
     const filteredTodos = this.getFilteredTodos();
     const hasCompleted = this.hasCompletedTodos();
@@ -160,6 +170,9 @@ class TodoList extends Component {
                     todo={todo}
                     onToggle={() => this.toggleTodo(todo.id)}
                     onRemove={() => this.remove(todo.id)}
+                    onUpdate={(newText) =>
+                      this.updateTodoText(todo.id, newText)
+                    }
                   />
                 ))}
               </ul>
@@ -172,18 +185,16 @@ class TodoList extends Component {
                     <button
                       key={filter}
                       onClick={() => this.setFilter(filter)}
-                      className={`buttonfilter ${
-                        this.state.filter === filter ? "active" : ""
-                      }`}
+                      className={`buttonfilter ${this.state.filter === filter ? "active" : ""
+                        }`}
                     >
                       {filter}
                     </button>
                   ))}
                 </div>
                 <button
-                  className={`buttonfilter todo-deleteAll ${
-                    hasCompleted ? "visible" : "hidden"
-                  }`}
+                  className={`buttonfilter todo-deleteAll ${hasCompleted ? "visible" : "hidden"
+                    }`}
                   onClick={this.clearCompleted}
                 >
                   Clear completed
