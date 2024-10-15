@@ -4,6 +4,7 @@ import TodoItem from "./TodoItem";
 import "./Todo.css";
 import { ThemeContext } from "../ThemeContext";
 import Pagination from "./TodoPagination";
+import { ThemeContext } from "./ThemeProvider";
 
 class TodoList extends Component {
   state = {
@@ -65,20 +66,20 @@ class TodoList extends Component {
   loadMore = () => {
     const { displayLimit } = this.state;
     const filteredTodos = this.getFilteredTodos();
-    
+
     if (displayLimit >= filteredTodos.length) return;
-  
-    this.setState(
-      { loading: true },
-      () => {
-        setTimeout(() => {
-          this.setState((prevState) => ({
-            displayLimit: Math.min(prevState.displayLimit + 5, filteredTodos.length),
-            loading: false,
-          }));
-        }, 500);
-      }
-    );
+
+    this.setState({ loading: true }, () => {
+      setTimeout(() => {
+        this.setState((prevState) => ({
+          displayLimit: Math.min(
+            prevState.displayLimit + 5,
+            filteredTodos.length
+          ),
+          loading: false,
+        }));
+      }, 500);
+    });
   };
 
   addTodo = (text) => {
@@ -110,7 +111,7 @@ class TodoList extends Component {
     this.setState({
       filter,
       currentPage: 1,
-      displayLimit: 5, 
+      displayLimit: 5,
     });
   };
 
@@ -174,6 +175,7 @@ class TodoList extends Component {
     }));
   };
   render() {
+    const { theme, toggleTheme } = useContext(ThemeContext);
     const filteredTodos = this.getFilteredTodos();
     const hasCompleted = this.hasCompletedTodos();
     const { currentPage, todosPerPage, displayLimit, loading } = this.state;
@@ -182,85 +184,78 @@ class TodoList extends Component {
     // const currentTodos = filteredTodos.slice(indexOfFirstTodo, indexOfLastTodo);
     const currentTodos = filteredTodos.slice(0, displayLimit);
 
-
     return (
-      <ThemeContext.Consumer>
-        {({ theme, toggleTheme }) => (
-          <div
-            className="todo-app"
-            style={{
-              background: theme === "light" ? "#fff" : "#333",
-              color: theme === "light" ? "#000" : "#fff",
-            }}
-          >
-            <h1>todos</h1>
-            <div className="todo-theme">
-              <button className="buttonfilter" onClick={toggleTheme}>
-                Chuyển sang {theme === "light" ? "Dark" : "Light"} Mode
-              </button>
-            </div>
-            <div className="todo-list">
-              <div className="todo-add">
-                <button className="toggle-all" onClick={this.toggleAll}>
-                  &#9660;
-                </button>
-                <TodoForm addTodo={this.addTodo} />
-              </div>
-              <div className="todo-items-container" ref={this.listRef}>
-                <ul className="todo-ulist">
-                  {currentTodos.map((todo) => (
-                    <TodoItem
-                      key={todo.id}
-                      todo={todo}
-                      onToggle={() => this.toggleTodo(todo.id)}
-                      onRemove={() => this.remove(todo.id)}
-                      onUpdate={(newText) =>
-                        this.updateTodoText(todo.id, newText)
-                      }
-                    />
-                  ))}
-                </ul>
-                {loading && <div className="loading">Loading more...</div>}
-              </div>
-              <div className="todo-footer">
-                <span className="todo-amount">
-                  {this.getFilteredTodos().length} items left!
-                </span>
-                <div className="filters">
-                  {["All", "Active", "Completed"].map((filter) => (
-                    <button
-                      key={filter}
-                      onClick={() => this.setFilter(filter)}
-                      className={`buttonfilter ${this.state.filter === filter ? "active" : ""
-                        }`}
-                    >
-                      {filter}
-                    </button>
-                  ))}
-                </div>
-                <button
-                  className={`buttonfilter todo-deleteAll ${hasCompleted ? "visible" : "hidden"
-                    }`}
-                  onClick={this.clearCompleted}
-                >
-                  Clear completed
-                </button>
-              </div>
-              <Pagination
-                todosPerPage={todosPerPage}
-                totalTodos={filteredTodos.length}
-                currentPage={currentPage}
-                paginate={this.paginate}
-              />
-            </div>
-            <div className="intro">
-              <p>Double-click to edit a todo</p>
-              <p>Created by the TodoMVC Team</p>
-              <p>Part of TodoMVC</p>
-            </div>
+      <div
+        className="todo-app"
+        style={{
+          background: theme === "light" ? "#fff" : "#333",
+          color: theme === "light" ? "#000" : "#fff",
+        }}
+      >
+        <h1>todos</h1>
+        <div className="todo-theme">
+          <button className="buttonfilter" onClick={toggleTheme}>
+            Chuyển sang {theme === "light" ? "Dark" : "Light"} Mode
+          </button>
+        </div>
+        <div className="todo-list">
+          <div className="todo-add">
+            <button className="toggle-all" onClick={this.toggleAll}>
+              &#9660;
+            </button>
+            <TodoForm addTodo={this.addTodo} />
           </div>
-        )}
-      </ThemeContext.Consumer>
+          <div className="todo-items-container" ref={this.listRef}>
+            <ul className="todo-ulist">
+              {currentTodos.map((todo) => (
+                <TodoItem
+                  key={todo.id}
+                  todo={todo}
+                  onToggle={() => this.toggleTodo(todo.id)}
+                  onRemove={() => this.remove(todo.id)}
+                  onUpdate={(newText) => this.updateTodoText(todo.id, newText)}
+                />
+              ))}
+            </ul>
+            {loading && <div className="loading">Loading more...</div>}
+          </div>
+          <div className="todo-footer">
+            <span className="todo-amount">
+              {this.getFilteredTodos().length} items left!
+            </span>
+            <div className="filters">
+              {["All", "Active", "Completed"].map((filter) => (
+                <button
+                  key={filter}
+                  onClick={() => this.setFilter(filter)}
+                  className={`buttonfilter ${this.state.filter === filter ? "active" : ""
+                    }`}
+                >
+                  {filter}
+                </button>
+              ))}
+            </div>
+            <button
+              className={`buttonfilter todo-deleteAll ${hasCompleted ? "visible" : "hidden"
+                }`}
+              onClick={this.clearCompleted}
+            >
+              Clear completed
+            </button>
+          </div>
+          <Pagination
+            todosPerPage={todosPerPage}
+            totalTodos={filteredTodos.length}
+            currentPage={currentPage}
+            paginate={this.paginate}
+          />
+        </div>
+        <div className="intro">
+          <p>Double-click to edit a todo</p>
+          <p>Created by the TodoMVC Team</p>
+          <p>Part of TodoMVC</p>
+        </div>
+      </div>
     );
   }
 }
