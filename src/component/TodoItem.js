@@ -79,3 +79,6 @@ class TodoItem extends Component {
 }
 
 export default TodoItem;
+
+// - sửa theme
+// - phân trang scroll bar 

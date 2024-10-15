@@ -1,7 +1,6 @@
 import React, { Component } from "react";
 import TodoForm from "./TodoForm";
 import TodoItem from "./TodoItem";
-import { text } from "@fortawesome/fontawesome-svg-core";
 import "./Todo.css";
 import { ThemeContext } from "../ThemeContext";
 import Pagination from "./TodoPagination";
@@ -39,6 +38,47 @@ class TodoList extends Component {
     filter: "All",
     currentPage: 1,
     todosPerPage: 5,
+    loading: false,
+    displayLimit: 5,
+  };
+
+  listRef = React.createRef();
+
+  componentDidMount() {
+    this.listRef.current.addEventListener("scroll", this.handleScroll);
+  }
+
+  componentWillUnmount() {
+    if (this.listRef.current) {
+      this.listRef.current.removeEventListener("scroll", this.handleScroll);
+    }
+  }
+
+  handleScroll = () => {
+    const { loading, displayLimit } = this.state;
+    const { scrollTop, scrollHeight, clientHeight } = this.listRef.current;
+    if (!loading && scrollHeight - scrollTop - clientHeight <= 0) {
+      this.loadMore();
+    }
+  };
+
+  loadMore = () => {
+    const { displayLimit } = this.state;
+    const filteredTodos = this.getFilteredTodos();
+    
+    if (displayLimit >= filteredTodos.length) return;
+  
+    this.setState(
+      { loading: true },
+      () => {
+        setTimeout(() => {
+          this.setState((prevState) => ({
+            displayLimit: Math.min(prevState.displayLimit + 5, filteredTodos.length),
+            loading: false,
+          }));
+        }, 500);
+      }
+    );
   };
 
   addTodo = (text) => {
@@ -70,6 +110,7 @@ class TodoList extends Component {
     this.setState({
       filter,
       currentPage: 1,
+      displayLimit: 5, 
     });
   };
 
@@ -135,10 +176,12 @@ class TodoList extends Component {
   render() {
     const filteredTodos = this.getFilteredTodos();
     const hasCompleted = this.hasCompletedTodos();
-    const { currentPage, todosPerPage } = this.state;
+    const { currentPage, todosPerPage, displayLimit, loading } = this.state;
     const indexOfLastTodo = currentPage * todosPerPage;
     const indexOfFirstTodo = indexOfLastTodo - todosPerPage;
-    const currentTodos = filteredTodos.slice(indexOfFirstTodo, indexOfLastTodo);
+    // const currentTodos = filteredTodos.slice(indexOfFirstTodo, indexOfLastTodo);
+    const currentTodos = filteredTodos.slice(0, displayLimit);
+
 
     return (
       <ThemeContext.Consumer>
@@ -163,19 +206,22 @@ class TodoList extends Component {
                 </button>
                 <TodoForm addTodo={this.addTodo} />
               </div>
-              <ul className="todo-ulist">
-                {currentTodos.map((todo) => (
-                  <TodoItem
-                    key={todo.id}
-                    todo={todo}
-                    onToggle={() => this.toggleTodo(todo.id)}
-                    onRemove={() => this.remove(todo.id)}
-                    onUpdate={(newText) =>
-                      this.updateTodoText(todo.id, newText)
-                    }
-                  />
-                ))}
-              </ul>
+              <div className="todo-items-container" ref={this.listRef}>
+                <ul className="todo-ulist">
+                  {currentTodos.map((todo) => (
+                    <TodoItem
+                      key={todo.id}
+                      todo={todo}
+                      onToggle={() => this.toggleTodo(todo.id)}
+                      onRemove={() => this.remove(todo.id)}
+                      onUpdate={(newText) =>
+                        this.updateTodoText(todo.id, newText)
+                      }
+                    />
+                  ))}
+                </ul>
+                {loading && <div className="loading">Loading more...</div>}
+              </div>
               <div className="todo-footer">
                 <span className="todo-amount">
                   {this.getFilteredTodos().length} items left!
