@@ -1,84 +1,61 @@
-import React, { Component } from "react";
+import React, { Component, useState } from "react";
 
-class TodoItem extends Component {
-  constructor(props) {
-    super(props);
-  }
+function TodoItem({ todo, onToggle, onRemove, onUpdate }) {
+  const [isEditing, setEditing] = useState(false);
+  const [editText, setEditText] = useState(todo.text);
 
-  state = {
-    isEditing: false,
-    editText: this.props.todo.text
+  const handleDoubleClick = () => {
+    setEditText(todo.text);
+    setEditing(true);
   };
 
-  handleDoubleClick = () => {
-    this.setState({ 
-      isEditing: true,
-      editText: this.props.todo.text 
-    });
+  const handleChange = (e) => {
+    setEditText(e.target.value);
   };
 
-  handleChange = (e) => {
-    this.setState({ editText: e.target.value });
-  };
-
-  handleSubmit = (e) => {
-    if (e.key === 'Enter') {
-      this.submitEdit();
+  const handleSubmit = (e) => {
+    if (e.key === "Enter") {
+      submitEdit();
     }
   };
 
-  handleBlur = () => {
+  const handleBlur = () => {
     this.submitEdit();
   };
 
-  submitEdit = () => {
-    const { editText } = this.state;
-    const { onUpdate } = this.props;
-    
-    if (editText.trim() !== '') {
+  const submitEdit = () => {
+    if (editText.trim() !== "") {
       onUpdate(editText);
-      this.setState({ isEditing: false });
+      setEditing(false);
     }
   };
 
-  render() {
-    const { todo, onToggle, onRemove } = this.props;
-    const { isEditing, editText } = this.state;
-    
-    return (
-      <li className="todo-link">
-        <input 
-          type="checkbox" 
-          checked={todo.completed} 
-          onChange={onToggle}
+  return (
+    <li className="todo-link">
+      <input type="checkbox" checked={todo.completed} onChange={onToggle} />
+      {isEditing ? (
+        <input
+          type="text"
+          className="edit-input"
+          value={editText}
+          onChange={handleChange}
+          onKeyDown={handleSubmit}
+          onBlur={handleBlur}
+          autoFocus
         />
-        {isEditing ? (
-          <input
-            type="text"
-            className="edit-input"
-            value={editText}
-            onChange={this.handleChange}
-            onKeyDown={this.handleSubmit}
-            onBlur={this.handleBlur}
-            autoFocus
-          />
-        ) : (
-          <span 
-            className={todo.completed ? "completed" : ""}
-            onDoubleClick={this.handleDoubleClick}
-          >
-            {todo.text}
-          </span>
-        )}
-        <button className="todo-delete" onClick={onRemove}>
-          &times;
-        </button>
-      </li>
-    );
-  }
+      ) : (
+        <span
+          className={todo.completed ? "completed" : ""}
+          onDoubleClick={handleDoubleClick}
+        >
+          {todo.text}
+        </span>
+      )}
+      <button className="todo-delete" onClick={onRemove}>
+        &times;
+      </button>
+    </li>
+  );
 }
 
 export default TodoItem;
-
-// - sửa theme
-// - phân trang scroll bar 

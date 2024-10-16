@@ -1,37 +1,32 @@
-import React, { Component } from "react";
+import React, { Component, useState } from "react";
 
-class TodoForm extends Component {
-  constructor(props) {
-    super(props);
-    this.state = { inputValue: "" };
-  }
+function TodoForm({ addTodo }) {
+  const [inputValue, setInputValue] = useState("");
 
-  handleInputChange = (e) => {
-    this.setState({ inputValue: e.target.value });
+  const handleInputChange = (e) => {
+    setInputValue(e.target.value);
   };
 
-  handleSubmit = (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    if (this.state.inputValue.trim()) {
-      this.props.addTodo(this.state.inputValue);
-      this.setState({ inputValue: "" });
+    if (inputValue.trim()) {
+      addTodo(inputValue);
+      setInputValue("");
     }
   };
 
-  render() {
-    return (
-      <form onSubmit={this.handleSubmit} className="todo-form">
-        <input
-          className="todo-input"
-          type="text"
-          value={this.state.inputValue}
-          onChange={this.handleInputChange}
-          placeholder="What needs to be done?"
-          autoFocus="true"
-        />
-      </form>
-    );
-  }
+  return (
+    <form onSubmit={handleSubmit} className="todo-form">
+      <input
+        className="todo-input"
+        type="text"
+        value={inputValue}
+        onChange={handleInputChange}
+        placeholder="What needs to be done?"
+        autoFocus="true"
+      />
+    </form>
+  );
 }
 
 export default TodoForm;

@@ -1,14 +1,14 @@
 import "./App.css";
 import TodoList from "./component/TodoList";
-import ThemeProvider from './ThemeProvider';
+import ThemeProvider from './ThemeContext';
 
 function App() {
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+    <ThemeProvider>
       <div className="App">
         <TodoList />
       </div>
-    </ThemeContext.Provider>
+    </ThemeProvider>
   );
 }
 
