@@ -2,7 +2,7 @@ import React, { Component, useState } from "react";
 
 function TodoItem({ todo, onToggle, onRemove, onUpdate }) {
   const [isEditing, setEditing] = useState(false);
-  const [editText, setEditText] = useState(todo.text);
+  const [editText, setEditText] = useState(todo.name);
 
   const handleDoubleClick = () => {
     setEditText(todo.text);
@@ -48,7 +48,7 @@ function TodoItem({ todo, onToggle, onRemove, onUpdate }) {
           className={todo.completed ? "completed" : ""}
           onDoubleClick={handleDoubleClick}
         >
-          {todo.text}
+          {todo.name}
         </span>
       )}
       <button className="todo-delete" onClick={onRemove}>

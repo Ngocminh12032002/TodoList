@@ -1,42 +1,28 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import TodoForm from "./TodoForm";
 import TodoItem from "./TodoItem";
 import "./Todo.css";
 import { ThemeContext } from "../ThemeContext";
 import Pagination from "./TodoPagination";
-import { useTodos } from "./useTodos"
+import { useTodos } from "../customhook/useTodos"
+import { getTasks, createTask, updateTask, deleteTask } from '../axios/api';
 
 function TodoList() {
-  // const initialTodos = [
-  //   { id: 1, text: "Buy milk", completed: false },
-  //   { id: 2, text: "Walk the dog", completed: false },
-  //   { id: 3, text: "Do homeWork", completed: false },
-  //   { id: 4, text: "Do laundry", completed: false },
-  //   { id: 5, text: "Do hoouseWork", completed: false },
-  //   { id: 6, text: "Shipping", completed: false },
-  //   { id: 7, text: "Do something", completed: false },
-  //   { id: 8, text: "Walking", completed: false },
-  //   { id: 9, text: "Cooking", completed: false },
-  //   { id: 10, text: "Matching", completed: false },
-  //   { id: 11, text: "Hanging out", completed: false },
-  //   { id: 12, text: "Feeding", completed: false },
-  //   { id: 13, text: "Gaming", completed: false },
-  //   { id: 14, text: "Coding", completed: false },
-  //   { id: 15, text: "Working", completed: false },
-  //   { id: 16, text: "Fighting", completed: false },
-  //   { id: 17, text: "Doing Gym", completed: false },
-  //   { id: 18, text: "Playing", completed: false },
-  //   { id: 19, text: "Loving", completed: false },
-  //   { id: 20, text: "Drying", completed: false },
-  //   { id: 21, text: "Listening music", completed: false },
-  //   { id: 22, text: "Watching film", completed: false },
-  //   { id: 23, text: "Running", completed: false },
-  //   { id: 24, text: "Do exercise", completed: false },
-  //   { id: 25, text: "Fixing", completed: false },
-  //   { id: 26, text: "Studying", completed: false },
-  // ];
   const [todos, setTodos] = useState([]);
-  const { addTodo, toggleTodo, removeTodo, toggleAll, clearCompleted, updateTodoText } = useTodos();
+  
+  useEffect(() => {
+    const fetchTasks = async () => {
+      try {
+        const data = await getTasks(); 
+        setTodos(data);
+      } catch (error) {
+        console.error("Error fetching tasks:", error);
+      }
+    };
+    fetchTasks();
+  }, []);
+
+  const { } = useTodos();
   const [currentPage, setCurrentPage] = useState(1);
   const [todosPerPage, setTodosPerPage] = useState(5);
   const [loading, setLoading] = useState(false);
@@ -94,23 +80,60 @@ function TodoList() {
     }, 500);
   };
 
-  // const removeTodo = (id) => {
-  //   setTodos((prevTodos) => {
-  //     const filteredTodos = prevTodos.filter((todo) => todo.id !== id);
-  //     const totalPages = Math.ceil(filteredTodos.length / todosPerPage);
-  //     const newCurrentPage =
-  //       totalPages < currentPage ? Math.max(1, totalPages) : currentPage;
-  //     setCurrentPage(newCurrentPage);
-  //     return filteredTodos;
-  //   });
-  // };
+  const removeTodo = (id) => {
+    setTodos((prevTodos) => {
+      const filteredTodos = prevTodos.filter((todo) => todo.id !== id);
+      const totalPages = Math.ceil(filteredTodos.length / todosPerPage);
+      const newCurrentPage =
+        totalPages < currentPage ? Math.max(1, totalPages) : currentPage;
+      setCurrentPage(newCurrentPage);
+      return filteredTodos;
+    });
+  };
 
-  // const clearCompleted = () => {
-  //   setTodos((prevState) =>
-  //     prevState.filter((todo) => !todo.completed),
-  //   );
-  //   setCurrentPage(1);
-  // };
+  const clearCompleted = () => {
+    setTodos((prevState) =>
+      prevState.filter((todo) => !todo.completed),
+    );
+    setCurrentPage(1);
+  };
+
+  const addTodo = (text) => {
+    try {
+      const newTodo = createTask({ name: text, completed: false });
+      setTodos(prevTodos => [...prevTodos, newTodo]);
+    } catch (err) {
+    }
+  };
+
+  const toggleTodo = (id) => {
+    setTodos((prevTodos) =>
+      prevTodos.map((todo) =>
+        todo.id === id ? { ...todo, completed: !todo.completed } : todo
+      )
+    );
+  };
+
+  const toggleAll = () => {
+    const allCompleted = todos.every((todo) => todo.completed);
+    setTodos((prevTodos) =>
+      prevTodos.map((todo) => ({
+        ...todo,
+        completed: !allCompleted,
+      }))
+    );
+  };
+
+  const updateTodoText = (id, newText) => {
+    if (!newText.trim()) return;
+    try {
+      const todoToUpdate = todos.find(todo => todo.id === id);
+      if (!todoToUpdate) return;
+      const updatedTodo = updateTask(id, { ...todoToUpdate, text: newText });
+      setTodos(prevTodos => prevTodos.map(todo => todo.id === id ? updatedTodo : todo));
+    } catch (err) {
+    }
+  };
 
   const paginate = (pageNumber) => {
     setCurrentPage(pageNumber);
