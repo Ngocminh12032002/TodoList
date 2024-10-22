@@ -1,26 +1,31 @@
-import React, { Component, useState } from "react";
+import React, { Component, useState, useContext, useEffect } from "react";
+import { TodoContext } from "../UpdateContext";
 
 function TodoForm({ addTodo }) {
+  const { editText, setEditText } = useContext(TodoContext);
   const [inputValue, setInputValue] = useState("");
-
   const handleInputChange = (e) => {
-    setInputValue(e.target.value);
+    setEditText(e.target.value);
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (inputValue.trim()) {
-      addTodo(inputValue);
-      setInputValue("");
+    if (editText.trim()) {
+      addTodo(editText);
+      setEditText("");
     }
   };
+
+  useEffect(() => {
+    setInputValue(editText);
+  }, [editText]);
 
   return (
     <form onSubmit={handleSubmit} className="todo-form">
       <input
         className="todo-input"
         type="text"
-        value={inputValue}
+        value={editText}
         onChange={handleInputChange}
         placeholder="What needs to be done?"
         autoFocus="true"

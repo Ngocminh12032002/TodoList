@@ -1,16 +1,21 @@
-import React, { Component, useState } from "react";
+import React, { Component, useState, useContext } from "react";
+import { TodoContext } from "../UpdateContext";
 
-function TodoItem({ todo, onToggle, onRemove, onUpdate }) {
+function TodoItem({ todo, onToggle, onRemove, onUpdate  }) {
   const [isEditing, setEditing] = useState(false);
-  const [editText, setEditText] = useState(todo.name);
+  const [editText, setEditText] = useState(TodoContext);
+  const [localEditText, setLocalEditText] = useState("");
+  
 
   const handleDoubleClick = () => {
-    setEditText(todo.text);
+    setLocalEditText(todo.name); 
+    setEditText(todo.name);
     setEditing(true);
   };
 
   const handleChange = (e) => {
     setEditText(e.target.value);
+    setLocalEditText(e.target.value); 
   };
 
   const handleSubmit = (e) => {
@@ -37,7 +42,7 @@ function TodoItem({ todo, onToggle, onRemove, onUpdate }) {
         <input
           type="text"
           className="edit-input"
-          value={editText}
+          value={localEditText}
           onChange={handleChange}
           onKeyDown={handleSubmit}
           onBlur={handleBlur}

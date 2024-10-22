@@ -1,9 +1,27 @@
-// useTodos.js
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 
-export const useTodos = () => {
+const useScrollLoad = (TodosPerPage, increment) => {
+  const [todosPerPage, setTodosPerPage] = useState(TodosPerPage);
+  const listRef = useRef(null);
 
-  return {
-
+  const handleScroll = () => {
+    if (
+      listRef.current.scrollTop + listRef.current.clientHeight >=
+      listRef.current.scrollHeight
+    ) {
+      setTodosPerPage((prev) => prev + increment);
+    }
   };
+
+  useEffect(() => {
+    listRef.current.addEventListener("scroll", handleScroll);
+
+    return () => {
+      listRef.current.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
+
+  return { listRef, todosPerPage };
 };
+
+export default useScrollLoad

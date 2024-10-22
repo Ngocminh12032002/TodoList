@@ -4,31 +4,33 @@ import TodoItem from "./TodoItem";
 import "./Todo.css";
 import { ThemeContext } from "../ThemeContext";
 import Pagination from "./TodoPagination";
-import { useTodos } from "../customhook/useTodos"
 import { getTasks, createTask, updateTask, deleteTask } from '../axios/api';
+import useScrollLoad from "../customhook/useTodos"
+import { TodoProvider } from "../UpdateContext";
 
 function TodoList() {
   const [todos, setTodos] = useState([]);
-  
   useEffect(() => {
     const fetchTasks = async () => {
+      setLoading(true);
       try {
-        const data = await getTasks(); 
-        setTodos(data);
+        const data = await getTasks();
+        setTodos(data); // Set todos only once
       } catch (error) {
         console.error("Error fetching tasks:", error);
+      } finally {
+        setLoading(false);
       }
     };
     fetchTasks();
   }, []);
 
-  const { } = useTodos();
   const [currentPage, setCurrentPage] = useState(1);
-  const [todosPerPage, setTodosPerPage] = useState(5);
   const [loading, setLoading] = useState(false);
   const [displayLimit, setDisplayLimit] = useState(5);
   const [filter, setFilter] = useState();
   const { theme, toggleTheme } = useContext(ThemeContext);
+  const { listRef, todosPerPage } = useScrollLoad(5, 5);
   const getFilteredTodos = () => {
     switch (filter) {
       case "Active":
@@ -44,41 +46,24 @@ function TodoList() {
   };
   const filteredTodos = getFilteredTodos();
   const hasCompleted = hasCompletedTodos();
-  const indexOfLastTodo = currentPage * todosPerPage;
-  const indexOfFirstTodo = indexOfLastTodo - todosPerPage;
-  const currentTodos = filteredTodos.slice(indexOfFirstTodo, indexOfLastTodo);
-  // const currentTodos = filteredTodos.slice(0, displayLimit);
+  const currentTodos = filteredTodos.slice(0, todosPerPage);
 
-  const listRef = React.createRef();
-
-  const componentDidMount = () => {
-    listRef.current.addEventListener("scroll", handleScroll);
-  };
-
-  const componentWillUnmount = () => {
-    if (listRef.current) {
-      listRef.current.removeEventListener("scroll", handleScroll);
-    }
-  };
-
-  const handleScroll = () => {
-    const { scrollTop, scrollHeight, clientHeight } = listRef.current;
-    if (!loading && scrollHeight - scrollTop - clientHeight <= 0) {
-      loadMore();
-    }
-  };
-
-  const loadMore = () => {
-    const filteredTodos = getFilteredTodos();
-    if (displayLimit >= filteredTodos.length) return;
-    setLoading(true);
-    setTimeout(() => {
-      setDisplayLimit((prevDisplayLimit) =>
-        Math.min(prevDisplayLimit + 5, filteredTodos.length)
-      );
-      setLoading(false);
-    }, 500);
-  };
+  useEffect(() => {
+    const fetchMoreTasks = async () => {
+      if (filteredTodos.length < todosPerPage) {
+        setLoading(true);
+        try {
+          const newData = await getTasks();
+          setTodos(prevTodos => [...prevTodos, ...newData]);
+        } catch (error) {
+          console.error("Error fetching more tasks:", error);
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+    fetchMoreTasks();
+  }, [todosPerPage]);
 
   const removeTodo = (id) => {
     setTodos((prevTodos) => {
@@ -140,76 +125,77 @@ function TodoList() {
   };
 
   return (
-    <div
-      className="todo-app"
-      style={{
-        background: theme === "light" ? "#fff" : "#333",
-        color: theme === "light" ? "#000" : "#fff",
-      }}
-    >
-      <h1>todos</h1>
-      <div className="todo-theme">
-        <button className="buttonfilter" onClick={toggleTheme}>
-          Chuyển sang {theme === "light" ? "Dark" : "Light"} Mode
-        </button>
-      </div>
-      <div className="todo-list">
-        <div className="todo-add">
-          <button className="toggle-all" onClick={toggleAll}>
-            &#9660;
+    <><TodoProvider>
+      <div
+        className="todo-app"
+        style={{
+          background: theme === "light" ? "#fff" : "#333",
+          color: theme === "light" ? "#000" : "#fff",
+        }}
+      >
+        <h1>todos</h1>
+        <div className="todo-theme">
+          <button className="buttonfilter" onClick={toggleTheme}>
+            Chuyển sang {theme === "light" ? "Dark" : "Light"} Mode
           </button>
-          <TodoForm addTodo={addTodo} />
         </div>
-        <div className="todo-items-container" ref={listRef}>
-          <ul className="todo-ulist">
-            {currentTodos.map((todo) => (
-              <TodoItem
-                key={todo.id}
-                todo={todo}
-                onToggle={() => toggleTodo(todo.id)}
-                onRemove={() => removeTodo(todo.id)}
-                onUpdate={(newText) => updateTodoText(todo.id, newText)}
-              />
-            ))}
-          </ul>
-          {loading && <div className="loading">Loading more...</div>}
-        </div>
-        <div className="todo-footer">
-          <span className="todo-amount">
-            {getFilteredTodos().length} items left!
-          </span>
-          <div className="filters">
-            {["All", "Active", "Completed"].map((filter) => (
-              <button
-                key={filter}
-                onClick={() => setFilter(filter)}
-                className={`buttonfilter ${filter === filter ? "active" : ""}`}
-              >
-                {filter}
-              </button>
-            ))}
+        <div className="todo-list">
+          <div className="todo-add">
+            <button className="toggle-all" onClick={toggleAll}>
+              &#9660;
+            </button>
+            <TodoForm addTodo={addTodo} />
           </div>
-          <button
-            className={`buttonfilter todo-deleteAll ${hasCompleted ? "visible" : "hidden"
-              }`}
-            onClick={clearCompleted}
-          >
-            Clear completed
-          </button>
+          <div className="todo-items-container" ref={listRef}>
+            <ul className="todo-ulist">
+              {currentTodos.map((todo) => (
+                <TodoItem
+                  key={todo.id}
+                  todo={todo}
+                  onToggle={() => toggleTodo(todo.id)}
+                  onRemove={() => removeTodo(todo.id)}
+                  onUpdate={(newText) => updateTodoText(todo.id, newText)} />
+              ))}
+            </ul>
+            {loading && <div className="loading">Loading more...</div>}
+          </div>
+          <div className="todo-footer">
+            <span className="todo-amount">
+              {getFilteredTodos().length} items left!
+            </span>
+            <div className="filters">
+              {["All", "Active", "Completed"].map((filter) => (
+                <button
+                  key={filter}
+                  onClick={() => setFilter(filter)}
+                  className={`buttonfilter ${filter === filter ? "active" : ""}`}
+                >
+                  {filter}
+                </button>
+              ))}
+            </div>
+            <button
+              className={`buttonfilter todo-deleteAll ${hasCompleted ? "visible" : "hidden"}`}
+              onClick={clearCompleted}
+            >
+              Clear completed
+            </button>
+          </div>
+          {/* <Pagination
+      todosPerPage={todosPerPage}
+      totalTodos={filteredTodos.length}
+      currentPage={currentPage}
+      paginate={paginate}
+    /> */}
         </div>
-        <Pagination
-          todosPerPage={todosPerPage}
-          totalTodos={filteredTodos.length}
-          currentPage={currentPage}
-          paginate={paginate}
-        />
+        <div className="intro">
+          <p>Double-click to edit a todo</p>
+          <p>Created by the TodoMVC Team</p>
+          <p>Part of TodoMVC</p>
+        </div>
       </div>
-      <div className="intro">
-        <p>Double-click to edit a todo</p>
-        <p>Created by the TodoMVC Team</p>
-        <p>Part of TodoMVC</p>
-      </div>
-    </div>
+    </TodoProvider>
+    </>
   );
 }
 
