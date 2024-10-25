@@ -15,7 +15,7 @@ function TodoList() {
       setLoading(true);
       try {
         const data = await getTasks();
-        setTodos(data); // Set todos only once
+        setTodos(data);
       } catch (error) {
         console.error("Error fetching tasks:", error);
       } finally {
@@ -49,21 +49,36 @@ function TodoList() {
   const currentTodos = filteredTodos.slice(0, todosPerPage);
 
   useEffect(() => {
+    let isMounted = true;
     const fetchMoreTasks = async () => {
-      if (filteredTodos.length < todosPerPage) {
-        setLoading(true);
-        try {
-          const newData = await getTasks();
-          setTodos(prevTodos => [...prevTodos, ...newData]);
-        } catch (error) {
-          console.error("Error fetching more tasks:", error);
-        } finally {
+      if (loading || todos.length >= todosPerPage) {
+        return;
+      }
+      setLoading(true);
+      try {
+        const newData = await getTasks();
+        if (isMounted) {
+          setTodos(prevTodos => {
+            if (prevTodos.length >= todosPerPage) {
+              return prevTodos;
+            }
+            return [...prevTodos, ...newData];
+          });
+        }
+      } catch (error) {
+        console.error("LỖI :", error);
+      } finally {
+        if (isMounted) {
           setLoading(false);
         }
       }
     };
     fetchMoreTasks();
-  }, [todosPerPage]);
+     return () => {
+      isMounted = false;
+    };
+  }, [todosPerPage, loading, todos.length]);
+
 
   const removeTodo = (id) => {
     setTodos((prevTodos) => {
