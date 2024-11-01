@@ -7,103 +7,80 @@ import Pagination from "./TodoPagination";
 import { getTasks, createTask, updateTask, deleteTask } from '../axios/api';
 import useScrollLoad from "../customhook/useTodos"
 import { TodoProvider } from "../UpdateContext";
+import { fetchTasks, addNewTask, updateTaskText, removeTask, clearCompletedTasks, toggleTaskCompletion } from '../redux/taskAction';
+import { useSelector, useDispatch } from 'react-redux';
 
 function TodoList() {
   const [todos, setTodos] = useState([]);
-  useEffect(() => {
-    const fetchTasks = async () => {
-      setLoading(true);
-      try {
-        const data = await getTasks();
-        setTodos(data);
-      } catch (error) {
-        console.error("Error fetching tasks:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchTasks();
-  }, []);
-
+  const dispatch = useDispatch();
+  const tasks = useSelector((state) => state.tasks.tasks);
+  const loading = useSelector((state) => state.tasks.loading);
+  const error = useSelector((state) => state.tasks.error);
   const [currentPage, setCurrentPage] = useState(1);
-  const [loading, setLoading] = useState(false);
   const [displayLimit, setDisplayLimit] = useState(5);
-  const [filter, setFilter] = useState();
+  const [filter, setFilter] = useState("All");
   const { theme, toggleTheme } = useContext(ThemeContext);
   const { listRef, todosPerPage } = useScrollLoad(5, 5);
   const getFilteredTodos = () => {
     switch (filter) {
       case "Active":
-        return todos.filter((todo) => !todo.completed);
+        return tasks.filter((todo) => !todo.completed);
       case "Completed":
-        return todos.filter((todo) => todo.completed);
+        return tasks.filter((todo) => todo.completed);
       default:
-        return todos;
+        return tasks;
     }
   };
-  const hasCompletedTodos = () => {
-    return todos.some((todo) => todo.completed);
-  };
+  const hasCompletedTodos = () => tasks.some((task) => task.completed);
   const filteredTodos = getFilteredTodos();
   const hasCompleted = hasCompletedTodos();
   const currentTodos = filteredTodos.slice(0, todosPerPage);
 
   useEffect(() => {
-    let isMounted = true;
-    const fetchMoreTasks = async () => {
-      if (loading || todos.length >= todosPerPage) {
-        return;
-      }
-      setLoading(true);
-      try {
-        const newData = await getTasks();
-        if (isMounted) {
-          setTodos(prevTodos => {
-            if (prevTodos.length >= todosPerPage) {
-              return prevTodos;
-            }
-            return [...prevTodos, ...newData];
-          });
-        }
-      } catch (error) {
-        console.error("LỖI :", error);
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
-    };
-    fetchMoreTasks();
-     return () => {
-      isMounted = false;
-    };
-  }, [todosPerPage, loading, todos.length]);
+    dispatch(fetchTasks());
+  }, [dispatch]);
+
+  // useEffect(() => {
+  //   let isMounted = true;
+  //   const fetchMoreTasks = async () => {
+  //     if (loading || todos.length >= todosPerPage) {
+  //       return;
+  //     }
+  //     try {
+  //       const newData = await getTasks();
+  //       if (isMounted) {
+  //         setTodos(prevTodos => {
+  //           if (prevTodos.length >= todosPerPage) {
+  //             return prevTodos;
+  //           }
+  //           return [...prevTodos, ...newData];
+  //         });
+  //       }
+  //     } catch (error) {
+  //     }
+  //   };
+  //   fetchMoreTasks();
+  //    return () => {
+  //     isMounted = false;
+  //   };
+  // }, [todosPerPage, loading, todos.length]);
 
 
   const removeTodo = (id) => {
-    setTodos((prevTodos) => {
-      const filteredTodos = prevTodos.filter((todo) => todo.id !== id);
+    dispatch(removeTask(id));
+    setCurrentPage((prevPage) => {
       const totalPages = Math.ceil(filteredTodos.length / todosPerPage);
-      const newCurrentPage =
-        totalPages < currentPage ? Math.max(1, totalPages) : currentPage;
-      setCurrentPage(newCurrentPage);
-      return filteredTodos;
+      return Math.max(1, Math.min(prevPage, totalPages));
     });
   };
 
   const clearCompleted = () => {
-    setTodos((prevState) =>
-      prevState.filter((todo) => !todo.completed),
-    );
+    dispatch(clearCompletedTasks());
     setCurrentPage(1);
   };
 
   const addTodo = (text) => {
-    try {
-      const newTodo = createTask({ name: text, completed: false });
-      setTodos(prevTodos => [...prevTodos, newTodo]);
-    } catch (err) {
-    }
+    dispatch(addNewTask({ name: text, completed: false }));
   };
 
   const toggleTodo = (id) => {
@@ -115,24 +92,13 @@ function TodoList() {
   };
 
   const toggleAll = () => {
-    const allCompleted = todos.every((todo) => todo.completed);
-    setTodos((prevTodos) =>
-      prevTodos.map((todo) => ({
-        ...todo,
-        completed: !allCompleted,
-      }))
-    );
+    const allCompleted = tasks.every((task) => task.completed);
+    tasks.forEach((task) => dispatch(toggleTaskCompletion(task.id, !allCompleted)));
   };
 
   const updateTodoText = (id, newText) => {
     if (!newText.trim()) return;
-    try {
-      const todoToUpdate = todos.find(todo => todo.id === id);
-      if (!todoToUpdate) return;
-      const updatedTodo = updateTask(id, { ...todoToUpdate, text: newText });
-      setTodos(prevTodos => prevTodos.map(todo => todo.id === id ? updatedTodo : todo));
-    } catch (err) {
-    }
+    dispatch(updateTaskText(id, newText));
   };
 
   const paginate = (pageNumber) => {
