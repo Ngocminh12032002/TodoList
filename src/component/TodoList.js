@@ -7,7 +7,7 @@ import Pagination from "./TodoPagination";
 import { getTasks, createTask, updateTask, deleteTask } from '../axios/api';
 import useScrollLoad from "../customhook/useTodos"
 import { TodoProvider } from "../UpdateContext";
-import { fetchTasks, addNewTask, updateTaskText, removeTask, clearCompletedTasks, toggleTaskCompletion } from '../redux/taskAction';
+import { fetchTasksRequest, fetchTasks, addNewTask, updateTaskText, removeTask, clearCompletedTasks, toggleTaskCompletion } from '../redux/taskAction';
 import { useSelector, useDispatch } from 'react-redux';
 
 function TodoList() {
@@ -37,7 +37,7 @@ function TodoList() {
   const currentTodos = filteredTodos.slice(0, todosPerPage);
 
   useEffect(() => {
-    dispatch(fetchTasks());
+    dispatch(fetchTasksRequest());
   }, [dispatch]);
 
   // useEffect(() => {
